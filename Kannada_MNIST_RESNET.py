@@ -47,6 +47,23 @@ class MyDataset(Dataset):
             img = self.transform(img)
         return img, label
 
+# %% Import_resnet
+from torchvision import models
+
+resnet = models.resnet152(pretrained=True)
+for node in resnet.modules():
+    if type(node)==nn.BatchNorm2d:
+        node.weight.requires_grad=True
+    else: # another way is to run: resnet.requiers_grad_(False)
+        for param in node.parameters():
+            param.requires_grad=False
+
+resnet.fc = nn.Sequential(nn.Linear(2048,1024),
+nn.BatchNorm1d(1024),
+nn.ReLU(),
+nn.Dropout(0.25),
+nn.Linear(1024,10))   
+resnet.conv1 = nn.Conv2d(1,64,7,stride=1,padding=3,bias=False)         
 
 class Net1D(nn.Module):
     def __init__(self):
@@ -106,7 +123,7 @@ def predict_all(net,dl):
     labels = torch.tensor([],device=device).int()
     for batch in dl:
         img,label = batch
-        GPU(img,label)
+        img,label = GPU(img,label)
         pred = net(img)
         predicts = torch.cat((predicts,pred),dim=0)
         labels = torch.cat((labels,label),dim=0)
@@ -200,3 +217,19 @@ dlt = DataLoader(xt,batch_size=100)
 predictions = torch.tensor([])
 for imgt in dlt:
     predictions = torch.cat((predictions,net(imgt)))
+
+# %%
+# torch.save(resnet.state_dict,'/Users/aymanjabri/notebooks/Kannada/ResNet152_Pre.pt')
+resnet.load_state_dict(torch.load('/Users/aymanjabri/notebooks/Kannada/ResNet152_Pre.pt'))
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
