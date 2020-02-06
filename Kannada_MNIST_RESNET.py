@@ -68,32 +68,51 @@ resnet.conv1 = nn.Conv2d(1,64,7,stride=1,padding=3,bias=False)
 class Net1D(nn.Module):
     def __init__(self):
         super().__init__()
-        self.input = nn.Sequential(nn.Conv1d(28,84,7,padding=3,bias=False),
-                                   nn.BatchNorm1d(84),
-                                   nn.ReLU(),
-                                   nn.MaxPool1d(3))
-        self.conv1 = nn.Conv1d(84,100,3,padding=3,bias=False)
-        self.bn1 = nn.BatchNorm1d(100)
-        self.conv2 = nn.Conv1d(100,200,3,padding=3,bias=False)
-        self.bn2 = nn.BatchNorm1d(200)
-        self.pool1 = nn.AdaptiveMaxPool1d(2)
-        self.pool2 = nn.AdaptiveAvgPool1d(2)
-        self.bn3 = nn.BatchNorm1d(400)
-        self.fc1 = nn.Linear(400*2,200)
-        self.bn4 = nn.BatchNorm1d(200)
-        self.fc2 = nn.Linear(200,10)
+        self.layer1 = nn.Sequential(nn.Conv1d(28,64,3,padding=3,bias=False),
+                                   nn.BatchNorm1d(64),
+                                   nn.LeakyReLU(),
+                                   nn.Conv1d(64,64,3,padding=3,bias=False),
+                                   nn.BatchNorm1d(64),
+                                   nn.LeakyReLU(),
+                                   nn.Conv1d(64,64,3,padding=3,bias=False),
+                                   nn.BatchNorm1d(64),
+                                   nn.LeakyReLU(),
+                                   nn.MaxPool1d(2),
+                                   nn.Dropout(0.25))
+        self.layer2 = nn.Sequential(nn.Conv1d(64,128,3,padding=3,bias=False),
+                                   nn.BatchNorm1d(128),
+                                   nn.LeakyReLU(),
+                                   nn.Conv1d(128,128,3,padding=3,bias=False),
+                                   nn.BatchNorm1d(128),
+                                   nn.LeakyReLU(),
+                                   nn.Conv1d(128,128,3,padding=3,bias=False),
+                                   nn.BatchNorm1d(128),
+                                   nn.LeakyReLU(),
+                                   nn.MaxPool1d(2),
+                                   nn.Dropout(0.25))
+        self.layer3 = nn.Sequential(nn.Conv1d(128,256,3,padding=3,bias=False),
+                                   nn.BatchNorm1d(256),
+                                   nn.LeakyReLU(),
+                                   nn.Conv1d(256,256,3,padding=3,bias=False),
+                                   nn.BatchNorm1d(256),
+                                   nn.LeakyReLU(),
+                                   nn.Conv1d(256,256,3,padding=3,bias=False),
+                                   nn.BatchNorm1d(256),
+                                   nn.LeakyReLU(),
+                                   nn.MaxPool1d(2),
+                                   nn.Dropout(0.25),
+                                   nn.Flatten())
+        self.bn3 = nn.BatchNorm1d(3584)
+        self.fc1 = nn.Linear(3584,100)
+        self.bn4 = nn.BatchNorm1d(100)
+        self.fc2 = nn.Linear(100,10)
 
     def forward(self,x):
         x = x.squeeze(1)
-        x = self.input(x)
-        x = F.relu(self.bn1(self.conv1(x)))
-        x = F.relu(self.bn2(self.conv2(x)))
-        a = self.pool1(x)
-        b = self.pool2(x)
-        x = torch.cat((a,b),dim=1)
-        x = self.bn3(x)
-        x = x.view(x.size(0),-1)
-        x = F.relu(self.bn4(self.fc1(x)))
+        x = self.layer1(x)
+        x = self.layer2(x)
+        x = self.layer3(x)
+        x = F.leaky_relu(self.bn4(self.fc1(x)))
         x = self.fc2(x)
         return x
     
@@ -119,20 +138,21 @@ def GPU(img,label):
 
 @torch.no_grad()
 def predict_all(net,dl):
-    predicts = torch.tensor([],device=device)
-    labels = torch.tensor([],device=device).int()
+    predicts = torch.tensor([])
+    labels = torch.LongTensor([])
     for batch in dl:
         img,label = batch
-        img,label = GPU(img,label)
+        net.cpu()
         pred = net(img)
         predicts = torch.cat((predicts,pred),dim=0)
         labels = torch.cat((labels,label),dim=0)
+        del img,label # To free memory.very effective when using GPUs
     return predicts,labels
 
 def get_correct_num(predicts,labels):
-    correct = predicts.softmax(dim=1).argmax(dim=1).eq(labels).sum()
-    accuracy = round(correct.item()/len(labels)*100,3)
-    return correct.item(),accuracy
+    correct = predicts.softmax(dim=1).argmax(dim=1).eq(labels).sum().item()
+    accuracy = round(correct/len(labels)*100,3)
+    return correct,accuracy
 
 def learn(net,epochs,dl,dv=None,lr=1e-3):
     '''
@@ -151,7 +171,7 @@ def learn(net,epochs,dl,dv=None,lr=1e-3):
         for batch in dl:
             optimizer.zero_grad()
             img,label = batch
-            GPU(img,label)
+            img,label = GPU(img,label)
             output = net(img)
             loss = loss_fn(output,label)
             loss.backward()
@@ -159,17 +179,19 @@ def learn(net,epochs,dl,dv=None,lr=1e-3):
             losses += loss.item()
             c,_ = get_correct_num(output,label)
             correct += c
+            del img,label
         accuracy = round(correct/len(dl.sampler)*100,3)
         if dv is not None:
             lossv = 0
             correctv = 0
             for valid in dv:
                 imv,labelv = valid
-                GPU(imv,labelv)
+                imv,labelv = GPU(imv,labelv)
                 outputv = net(imv)
                 lossv += loss_fn(outputv,labelv)
                 cv,_=get_correct_num(outputv,labelv)
                 correctv += cv
+                del imv,labelv
             accuracyv = round(correctv/len(dv.sampler)*100,3)
 
             if epoch <=5:    
@@ -210,8 +232,6 @@ dls = DataLoader(ds,batch_size=100,sampler=sampler)
 Run this cell only after you train the network 'net' and happy with the 
 results
 '''
-xt = torch.from_numpy(test_df.drop(labels='id',axis=1).values).float()
-xt = xt.view(xt.size(0),-1,28,28)
 dlt = DataLoader(xt,batch_size=100)
 
 predictions = torch.tensor([])
