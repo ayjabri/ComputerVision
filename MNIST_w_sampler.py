@@ -131,7 +131,8 @@ def learn(net,data,epochs,tb,lr=1e-3):
         tb.add_scalar('Accuracy',e_acc,epoch)
         for name,param in net.named_parameters():
             tb.add_histogram('{}'.format(name), param)
-
+        
+    tb.close()
     return total_losses,total_accuracy
 
 def predict_all(net,loader):
@@ -174,3 +175,5 @@ class runner():
         fig.tight_layout()
         return net
 
+summary = SummaryWriter()
+summary.add_scalars(m)

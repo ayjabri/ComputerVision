@@ -31,7 +31,7 @@ label_train = torch.from_numpy(train_df.label.values).int()
 label_dig_mnist = torch.from_numpy(dig_mnist.label.values).int()
 label = torch.cat((label_train,label_dig_mnist),dim=0).long()
 
-# %% Network
+# %% Custom Dataset
 class MyDataset(Dataset):
     def __init__(self,x,y,transform=None):
         super(MyDataset,self).__init__()
@@ -47,7 +47,24 @@ class MyDataset(Dataset):
             img = self.transform(img)
         return img, label
 
+# %% DataLoaders
+from torchvision import transforms    
+import kornia.augmentation as k
 
+tfms = transforms.Compose([transforms.RandomApply([k.RandomRotation(45.)],p=0.7),
+                           transforms.Normalize((0.5,),(0.5,))])
+
+#create a master dataset then split it into train and validation
+dsm = MyDataset(img,label,transform=tfms) # Master Dataset
+ds,dv = torch.utils.data.random_split(dsm,[60000,10240])
+
+dl = DataLoader(ds,batch_size=100,shuffle=True) # training dataloader
+dlv = DataLoader(dv,batch_size=100)             # validation dataloaderr
+
+sampler = torch.utils.data.RandomSampler(ds,replacement=True,num_samples=500)
+dls = DataLoader(ds,batch_size=100,sampler=sampler)
+
+# %% Mixed1D2D Network
 class Net(nn.Module):
     def __init__(self,out,kernel):
         super(Net,self).__init__()
@@ -112,6 +129,118 @@ class Net(nn.Module):
                 nn.init.kaiming_uniform_(param.weight)
 
 
+# %% Deep Network
+    
+class AdaptiveMixedPool1d(nn.Module):
+    def __init__(self,sz=None):
+        super().__init__()
+        sz = sz or (1,1)
+        self.mp = nn.AdaptiveAvgPool1d(sz)
+        self.ap = nn.AdaptiveMaxPool1d(sz)
+    def forward(self,x): return torch.cat((self.mp(x),self.ap(x)),dim=1)
+
+class AdaptiveMixedPool2d(nn.Module):
+    def __init__(self,sz=None):
+        super().__init__()
+        sz = sz or (1,1)
+        self.mp = nn.AdaptiveAvgPool2d(sz)
+        self.ap = nn.AdaptiveMaxPool2d(sz)
+    def forward(self,x): return torch.cat((self.mp(x),self.ap(x)),dim=1)
+
+
+class DeepNet(nn.Module):
+    def __init__(self):
+        super().__init__()
+                
+        self.conv1 = nn.Sequential(nn.Conv1d(28,64,7,padding=3,bias=False),
+                                    nn.BatchNorm1d(64),
+                                    nn.LeakyReLU(inplace=True),
+                                    nn.Conv1d(64,64,5,padding=3,bias=False),
+                                    nn.BatchNorm1d(64),
+                                    nn.LeakyReLU(inplace=True),
+                                    nn.Conv1d(64,64,5,padding=3,bias=False),
+                                    nn.BatchNorm1d(64),
+                                    nn.LeakyReLU(inplace=True),
+                                    nn.MaxPool1d(2,stride=2),
+                                    nn.Dropout(p=0.25),
+                                    
+                                    nn.Conv1d(64,128,3,padding=2,bias=False),
+                                    nn.BatchNorm1d(128),
+                                    nn.LeakyReLU(inplace=True),
+                                    nn.Conv1d(128,128,3,padding=2,bias=False),
+                                    nn.BatchNorm1d(128),
+                                    nn.LeakyReLU(inplace=True),
+                                    nn.Conv1d(128,128,3,padding=2,bias=False),
+                                    nn.BatchNorm1d(128),
+                                    nn.LeakyReLU(inplace=True),
+                                    nn.MaxPool1d(2,stride=2),
+                                    nn.Dropout(p=0.25),
+                                    
+                                    nn.Conv1d(128,256,3,padding=2,bias=False),
+                                    nn.BatchNorm1d(256),
+                                    nn.LeakyReLU(inplace=True),
+                                    nn.Conv1d(256,256,3,padding=2,bias=False),
+                                    nn.BatchNorm1d(256),
+                                    nn.LeakyReLU(inplace=True),
+                                    nn.Conv1d(256,256,3,padding=2,bias=False),
+                                    nn.BatchNorm1d(256),
+                                    nn.LeakyReLU(inplace=True),
+                                    AdaptiveMixedPool1d(1),
+                                    nn.Dropout(p=0.25)
+                                    )
+        
+        
+        self.conv2 = nn.Sequential(nn.Conv2d(1,64,7,padding=3,bias=False),
+                                    nn.BatchNorm2d(64),
+                                    nn.LeakyReLU(inplace=True),
+                                    nn.Conv2d(64,64,5,padding=3,bias=False),
+                                    nn.BatchNorm2d(64),
+                                    nn.LeakyReLU(inplace=True),
+                                    nn.Conv2d(64,64,5,padding=3,bias=False),
+                                    nn.BatchNorm2d(64),
+                                    nn.LeakyReLU(inplace=True),
+                                    nn.MaxPool2d(2,stride=2),
+                                    nn.Dropout2d(p=0.25),
+                                    
+                                    nn.Conv2d(64,128,3,padding=2,bias=False),
+                                    nn.BatchNorm2d(128),
+                                    nn.LeakyReLU(inplace=True),
+                                    nn.Conv2d(128,128,3,padding=2,bias=False),
+                                    nn.BatchNorm2d(128),
+                                    nn.LeakyReLU(inplace=True),
+                                    nn.Conv2d(128,128,3,padding=2,bias=False),
+                                    nn.BatchNorm2d(128),
+                                    nn.LeakyReLU(inplace=True),
+                                    nn.MaxPool2d(2,stride=2),
+                                    nn.Dropout2d(p=0.25),
+                                    
+                                    nn.Conv2d(128,256,3,padding=2,bias=False),
+                                    nn.BatchNorm2d(256),
+                                    nn.LeakyReLU(inplace=True),
+                                    nn.Conv2d(256,256,3,padding=2,bias=False),
+                                    nn.BatchNorm2d(256),
+                                    nn.LeakyReLU(inplace=True),
+                                    nn.Conv2d(256,256,3,padding=2,bias=False),
+                                    nn.BatchNorm2d(256),
+                                    nn.LeakyReLU(inplace=True),
+                                    AdaptiveMixedPool2d(1),
+                                    nn.Dropout2d(p=0.25)
+                                    )
+        
+        self.fc = nn.Sequential(nn.Flatten(),
+                                nn.BatchNorm1d(1024),
+                                nn.Linear(1024,256),
+                                nn.BatchNorm1d(256),
+                                nn.LeakyReLU(),
+                                nn.Dropout(p=0.25),
+                                nn.Linear(256,10)
+                                )
+    def forward(self,x):
+        x1 = self.conv1(x.squeeze(1))
+        x2 = self.conv2(x)
+        x = torch.cat((x1,x2.squeeze(2)),dim=1)
+        x = self.fc(x)
+        return x
 
 # %% Supporting_Modules
 
@@ -235,22 +364,6 @@ def plot_run(losses,accuracy,lr=None,out_channels=None,kernel_size=None):
     fig.tight_layout()
     plt.show()
 
-
-# %% DataLoaders
-from torchvision import transforms    
-
-tfms = transforms.Compose([transforms.Normalize((0.5,),(0.5,))])
-
-#create a master dataset then split it into train and validation
-dsm = MyDataset(img,label,transform=tfms) # Master Dataset
-ds,dv = torch.utils.data.random_split(dsm,[60000,10240])
-
-dl = DataLoader(ds,batch_size=100,shuffle=True) # training dataloader
-dlv = DataLoader(dv,batch_size=100)             # validation dataloaderr
-
-sampler = torch.utils.data.RandomSampler(ds,replacement=True,num_samples=500)
-dls = DataLoader(ds,batch_size=100,sampler=sampler)
-
 # %% Submit_Results
 '''
 Run this cell only after you train the network 'net' and happy with the 
@@ -263,115 +376,3 @@ dlt = DataLoader(xt,batch_size=100)
 predictions = torch.tensor([])
 for imgt in dlt:
     predictions = torch.cat((predictions,net(imgt)))
-# %% Deep Network
-    
-class AdaptiveMixedPool1d(nn.Module):
-    def __init__(self,sz=None):
-        super().__init__()
-        sz = sz or (1,1)
-        self.mp = nn.AdaptiveAvgPool1d(sz)
-        self.ap = nn.AdaptiveMaxPool1d(sz)
-    def forward(self,x): return torch.cat((self.mp(x),self.ap(x)),dim=1)
-
-class AdaptiveMixedPool2d(nn.Module):
-    def __init__(self,sz=None):
-        super().__init__()
-        sz = sz or (1,1)
-        self.mp = nn.AdaptiveAvgPool2d(sz)
-        self.ap = nn.AdaptiveMaxPool2d(sz)
-    def forward(self,x): return torch.cat((self.mp(x),self.ap(x)),dim=1)
-
-
-class DeepNet(nn.Module):
-    def __init__(self):
-        super().__init__()
-                
-        self.conv1 = nn.Sequential(nn.Conv1d(28,64,7,padding=3,bias=False),
-                                    nn.BatchNorm1d(64),
-                                    nn.LeakyReLU(inplace=True),
-                                    nn.Conv1d(64,64,5,padding=3,bias=False),
-                                    nn.BatchNorm1d(64),
-                                    nn.LeakyReLU(inplace=True),
-                                    nn.Conv1d(64,64,5,padding=3,bias=False),
-                                    nn.BatchNorm1d(64),
-                                    nn.LeakyReLU(inplace=True),
-                                    nn.MaxPool1d(2,stride=2),
-                                    nn.Dropout(p=0.25),
-                                    
-                                    nn.Conv1d(64,128,3,padding=2,bias=False),
-                                    nn.BatchNorm1d(128),
-                                    nn.LeakyReLU(inplace=True),
-                                    nn.Conv1d(128,128,3,padding=2,bias=False),
-                                    nn.BatchNorm1d(128),
-                                    nn.LeakyReLU(inplace=True),
-                                    nn.Conv1d(128,128,3,padding=2,bias=False),
-                                    nn.BatchNorm1d(128),
-                                    nn.LeakyReLU(inplace=True),
-                                    nn.MaxPool1d(2,stride=2),
-                                    nn.Dropout(p=0.25),
-                                    
-                                    nn.Conv1d(128,256,3,padding=2,bias=False),
-                                    nn.BatchNorm1d(256),
-                                    nn.LeakyReLU(inplace=True),
-                                    nn.Conv1d(256,256,3,padding=2,bias=False),
-                                    nn.BatchNorm1d(256),
-                                    nn.LeakyReLU(inplace=True),
-                                    nn.Conv1d(256,256,3,padding=2,bias=False),
-                                    nn.BatchNorm1d(256),
-                                    nn.LeakyReLU(inplace=True),
-                                    AdaptiveMixedPool1d(1),
-                                    nn.Dropout(p=0.25)
-                                    )
-        
-        
-        self.conv2 = nn.Sequential(nn.Conv2d(1,64,7,padding=3,bias=False),
-                                    nn.BatchNorm2d(64),
-                                    nn.LeakyReLU(inplace=True),
-                                    nn.Conv2d(64,64,5,padding=3,bias=False),
-                                    nn.BatchNorm2d(64),
-                                    nn.LeakyReLU(inplace=True),
-                                    nn.Conv2d(64,64,5,padding=3,bias=False),
-                                    nn.BatchNorm2d(64),
-                                    nn.LeakyReLU(inplace=True),
-                                    nn.MaxPool2d(2,stride=2),
-                                    nn.Dropout2d(p=0.25),
-                                    
-                                    nn.Conv2d(64,128,3,padding=2,bias=False),
-                                    nn.BatchNorm2d(128),
-                                    nn.LeakyReLU(inplace=True),
-                                    nn.Conv2d(128,128,3,padding=2,bias=False),
-                                    nn.BatchNorm2d(128),
-                                    nn.LeakyReLU(inplace=True),
-                                    nn.Conv2d(128,128,3,padding=2,bias=False),
-                                    nn.BatchNorm2d(128),
-                                    nn.LeakyReLU(inplace=True),
-                                    nn.MaxPool2d(2,stride=2),
-                                    nn.Dropout2d(p=0.25),
-                                    
-                                    nn.Conv2d(128,256,3,padding=2,bias=False),
-                                    nn.BatchNorm2d(256),
-                                    nn.LeakyReLU(inplace=True),
-                                    nn.Conv2d(256,256,3,padding=2,bias=False),
-                                    nn.BatchNorm2d(256),
-                                    nn.LeakyReLU(inplace=True),
-                                    nn.Conv2d(256,256,3,padding=2,bias=False),
-                                    nn.BatchNorm2d(256),
-                                    nn.LeakyReLU(inplace=True),
-                                    AdaptiveMixedPool2d(1),
-                                    nn.Dropout2d(p=0.25)
-                                    )
-        
-        self.fc = nn.Sequential(nn.Flatten(),
-                                nn.BatchNorm1d(1024),
-                                nn.Linear(1024,256),
-                                nn.BatchNorm1d(256),
-                                nn.LeakyReLU(),
-                                nn.Dropout(p=0.25),
-                                nn.Linear(256,10)
-                                )
-    def forward(self,x):
-        x1 = self.conv1(x.squeeze(1))
-        x2 = self.conv2(x)
-        x = torch.cat((x1,x2.squeeze(2)),dim=1)
-        x = self.fc(x)
-        return x
