@@ -1,6 +1,7 @@
+#%%
 import cv2
 import sys
-
+import matplotlib.pyplot as plt
 if __name__=='__main__':
         # Get user supplied values
         imagePath = 'test1.jpg'
