@@ -1,5 +1,6 @@
 #%%
 import cv2
+import timeit
 import sys
 import matplotlib.pyplot as plt
 if __name__=='__main__':
@@ -31,3 +32,5 @@ if __name__=='__main__':
 
         cv2.imshow("Faces found", image)
         cv2.waitKey(0)
+
+# %%
