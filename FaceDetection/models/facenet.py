@@ -43,5 +43,5 @@ class FaceNet(facenet.MTCNN):
             cv2.rectangle(frame, (x, y), (h, w), (80,18,236), 2)
             cv2.rectangle(frame, (x, y), (h, y-15), (80,18,236), cv2.FILLED)
             cv2.putText(frame, 'face', (x + 6, y - 2), cv2.FONT_HERSHEY_DUPLEX, 0.5, (255, 255, 255), 1)
-        return frame #cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        return frame
 

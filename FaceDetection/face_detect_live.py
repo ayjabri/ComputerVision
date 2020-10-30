@@ -10,7 +10,6 @@ import argparse
 import matplotlib.pyplot as plt
 from models import facenet, haar
 
-fname = 'models/haarcascade_frontalface_default.xml'
 
 
 class FaceDetectLive(object):
@@ -50,12 +49,12 @@ class FaceDetectLive(object):
 if __name__=="__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--file', required=False, help='Name and path of the HAAR file')
-    parser.add_argument('--n', required=False, type= int, default=1, help='Number of frames to skip when detecting faces')
-    parser.add_argument('--algo', required=False, help='Algorithm to use: choise are "haar", "HOG" and "FaceNet"')
+    parser.add_argument('--n', required=False, type= int, default=1, help='Detect faces on the Nth frame')
+    parser.add_argument('--algo', required=False, help='Algorithm to use: choose between: "haar", "hog" and "facenet"')
     arg = parser.parse_args()
-    # fname = (arg.file if arg.file else 'haarcascade_frontalface_default.xml')
+    fname = (arg.file if arg.file else 'models/haarcascade_frontalface_default.xml')
 
-    if arg.algo == 'FaceNet':
+    if arg.algo == 'facenet':
         from models import facenet
         clf = facenet.FaceNet(**facenet.params)
     else:
