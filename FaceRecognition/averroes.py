@@ -67,4 +67,6 @@ if __name__=='__main__':
     search = ftrain.BestModel(ftrain.params)
     search.fit(features, classes)
 
+    joblib.dump(search.best_classifier, 'model.joblib')
+
 
