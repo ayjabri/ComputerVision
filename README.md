@@ -1,2 +1,2 @@
-# ImageClassification
- Image classfication notebooks and py files 
+# Computer Vision Projects
+ Coming soon (when I have time away from coding!)

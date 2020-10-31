@@ -10,20 +10,20 @@ import cv2
 # try:
 #     import facenet_pytorch as facenet
 # except Error:
-#     print('''Please install facenet_pytorch 
+#     print('''Please install facenet_pytorch
 #     run: $pip install facenet_pytorch''')
 #     pass
 
 
 params = {
-        'image_size':260,
-        "margin":2,
-        "min_face_size":20,
+        'image_size':160,
+        "margin":0,
+        "min_face_size":50,
         "thresholds":[0.6, 0.7, 0.7],
         "factor":0.709,
         "post_process":True,
         "select_largest":True,
-        "selection_method":"largest_over_theshold",
+        "selection_method":"probability",
         "keep_all":True,
         "device":None
         }
@@ -31,17 +31,18 @@ params = {
 class FaceNet(facenet.MTCNN):
     def __init__(self, **kwargs):
         super(FaceNet, self).__init__(**kwargs)
-        
-    
+
+
     def find_faces(self,img):
         return self.detect(img)[0]
-    
+
     def draw_rect(self, frame, faces):
         if faces  is None: return frame
+        img = frame.copy()
         for box in faces:
             x,y,h,w = box.astype(int)
-            cv2.rectangle(frame, (x, y), (h, w), (80,18,236), 2)
-            cv2.rectangle(frame, (x, y), (h, y-15), (80,18,236), cv2.FILLED)
-            cv2.putText(frame, 'face', (x + 6, y - 2), cv2.FONT_HERSHEY_DUPLEX, 0.5, (255, 255, 255), 1)
-        return frame
+            cv2.rectangle(img, (x, y), (h, w), (80,18,236), 2)
+            cv2.rectangle(img, (x, y), (h, y-15), (80,18,236), cv2.FILLED)
+            cv2.putText(img, 'face', (x + 6, y - 2), cv2.FONT_HERSHEY_DUPLEX, 0.5, (255, 255, 255), 1)
+        return img
 

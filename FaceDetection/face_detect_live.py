@@ -7,20 +7,19 @@ Created on Fri Oct 30 14:46:44 2020
 
 import cv2
 import argparse
-import matplotlib.pyplot as plt
-from models import facenet, haar
+from models import f_net, haar
 
 
 
 class FaceDetectLive(object):
-    def __init__(self, classifier, skip_n=1, h_res=800, v_res=600, font=cv2.FONT_HERSHEY_DUPLEX):      
+    def __init__(self, classifier, skip_n=1, h_res=400, v_res=600, font=cv2.FONT_HERSHEY_DUPLEX):
         self.clf = classifier
         self.skip_n = skip_n
         self.h_res = h_res
         self.v_res = v_res
         self.font = font
         self.VideoCapture()
-    
+
     def VideoCapture(self):
         self.cap = cv2.VideoCapture(0)
         self.cap.set(3, self.h_res)
@@ -34,13 +33,13 @@ class FaceDetectLive(object):
         faces = None
         while True:
             good, frame = self.cap.read()
-            frame = cv2.flip(frame,1) #flip horizontaly because it looks better
+            frame = cv2.flip(frame,1) #flip horizontaly because it looks better!
             if good:
                 if self.timer(i) :
                     faces = self.clf.find_faces(frame)
                 frame = self.clf.draw_rect(frame, faces)
                 i += 1
-            cv2.imshow('face', frame)
+                cv2.imshow('face', frame)
             if cv2.waitKey(1) & 0xFF == ord('q'):break
         self.cap.release()
         cv2.destroyAllWindows()
@@ -55,14 +54,11 @@ if __name__=="__main__":
     fname = (arg.file if arg.file else 'models/haarcascade_frontalface_default.xml')
 
     if arg.algo == 'facenet':
-        from models import facenet
-        clf = facenet.FaceNet(**facenet.params)
+        clf = f_net.FaceNet(**f_net.params)
     else:
-        from models import haar
         clf = haar.HAAR(fname)
-    
-    
+
+
     cam = FaceDetectLive(clf, arg.n)
     cam.detect()
 
-    

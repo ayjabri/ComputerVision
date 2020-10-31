@@ -9,8 +9,8 @@ import cv2
 
 kwargs = {
         'scaleFactor':1.1,
-        'minNeighbors':3,
-        'minSize':(30,30),
+        'minNeighbors':4,
+        'minSize':(50,50),
         'maxSize':None
         }
 
@@ -22,10 +22,11 @@ class HAAR(cv2.CascadeClassifier):
         super(HAAR, self).__init__(fname)
         self.kwargs = kwargs
         self.fname = fname
-        
+
     def find_faces(self,img):
-        return self.detectMultiScale(img, **self.kwargs)
-    
+        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        return self.detectMultiScale(gray, **self.kwargs)
+
     def draw_rect(self, frame, faces):
         if faces  is None: return frame
         for box in faces:
@@ -33,16 +34,5 @@ class HAAR(cv2.CascadeClassifier):
             cv2.rectangle(frame, (x, y), (x+h, y+w), (80,18,236), 2)
             cv2.rectangle(frame, (x, y), (x+h, y-15), (80,18,236), cv2.FILLED)
             cv2.putText(frame, 'face', (x + 6, y - 2), cv2.FONT_HERSHEY_DUPLEX, 0.5, (255, 255, 255), 1)
-        return frame 
+        return frame
 
-
-img = cv2.imread('test.jpg')
-
-m = HAAR(fname)
-model = cv2.CascadeClassifier(fname)
-
-def draw_rect(img, faces):
-    for box in faces:
-        x,y,h,w = box
-        cv2.rectangle(img, (x,y), (x+h, y+w), (255,0,0),2)
-    return cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
