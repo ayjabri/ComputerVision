@@ -1,28 +1,27 @@
-# import timm
-
+#%%
 import cv2
 import torch
 import datetime
 import argparse
-import pandas as pd
+import joblib
 import numpy as np
 
 
 import facenet_pytorch as facenet
 from torch.utils.data import DataLoader
 import matplotlib.pyplot as plt
-from torchvision import datasets, transforms
+from torchvision import datasets
 
 from sklearn.manifold import TSNE
 from sklearn.decomposition import PCA
 from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.neighbors import KNeighborsClassifier
-from sklearn.externals import joblib
+
 
 net = facenet.InceptionResnetV1(pretrained='vggface2').eval()
 mtcnn = facenet.MTCNN(image_size=260)
-path = "data/train"
+path = "data\\train"
 
 def collate_fn(x):
     return x[0]
@@ -39,14 +38,15 @@ def unpack_loader(loader, mtcnn, p=False):
             classes.append(y)
             probs.append(prob)
     return (torch.stack(faces),
-            torch.stack(classes),
-            torch.stack(probs)
+            torch.tensor(classes),
+            torch.tensor(probs)
             )
 
 def plot_features(X,y):
     pass
 
 
+#%%
 if __name__=='__main__':
 
     df = datasets.ImageFolder(path)
@@ -57,8 +57,8 @@ if __name__=='__main__':
     train_loader = DataLoader(train_df, collate_fn=collate_fn)
     test_loader = DataLoader(test_df, collate_fn=collate_fn)
 
-    faces, classes, probs = unpack_loader(train_loader)
-    faces_t, classes_t, probs_t = unpack_loader(test_loader)
+    faces, classes, probs = unpack_loader(train_loader, mtcnn)
+    faces_t, classes_t, probs_t = unpack_loader(test_loader, mtcnn)
 
     features = net(faces).detach()
     features_t = net(faces_t).detach()
