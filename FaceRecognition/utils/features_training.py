@@ -11,24 +11,25 @@ from sklearn.tree import DecisionTreeClassifier
 
 
 params = {
-            'RandomForestClassifier':{'n_estimators':[100],
+            'RandomForestClassifier':{'n_estimators':[50,100,150],
                                     'criterion':['gini'],
-                                    'max_depth':np.arange(1,10),
-                                    'min_samples_split':np.arange(1,7),
+                                    'max_depth':np.arange(1,50),
+                                    'min_samples_split':np.arange(2,7),
                                     'min_samples_leaf':np.arange(1,5),
                                     },
             'KNeighborsClassifier': {
                                     'n_neighbors':np.arange(1,10),
-                                    'weights':['uniform'],
-                                    'algorithm':['auto','KDTree','BallTree'],
-                                    'leaf_size':np.arange(1,6),
+                                    'weights':['uniform','distance'],
+                                    'algorithm':['auto'],
+                                    'leaf_size':np.arange(1,51),
                                     },
             'DecisionTreeClassifier':{
                                     'criterion':['gini'],
-                                    'max_depth':np.arange(1,10),
+                                    'max_depth':np.arange(1,51),
                                     'min_samples_split':np.arange(2,11),
                                     },
             'LogisticRegression':   {
+                                    'penalty':['l1','l2','elasticnet','none'],
                                     'C': [0.1,0.5,1,5,10,50,100],
                                     },
             'SVC':                  {
@@ -37,14 +38,14 @@ params = {
                                     'gamma': [0.1,0.5,1,3,6,10],
                                     'kernel': ['rbf']
                                     }
-}
+            }
 
 class BestModel(object):
-    def __init__(self, params=None):
+    def __init__(self, cv = None, params=None):
         self.__c = []
         if params is not None:
             for clf in params:
-                setattr(self, clf+'_Grid', GridSearchCV(eval(clf)( ), param_grid=params[clf]))
+                setattr(self, clf+'_Grid', GridSearchCV(eval(clf)( ), param_grid=params[clf], cv=cv))
                 self.__c.append(getattr(self, clf+'_Grid'))
         self.params = params
         self.best_classifier = None
@@ -58,6 +59,6 @@ class BestModel(object):
             print(f'classifier {i} has a top score of {score}')
             self.results[i] = [score, classifier.best_params_]
             if score > r:
-                self.best_classifier = classifier
+                self.best_classifier = classifier.best_estimator_
             r = score
 

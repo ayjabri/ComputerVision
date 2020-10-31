@@ -1,28 +1,19 @@
 #%%
-import cv2
 import torch
-import datetime
-import argparse
 import joblib
-import numpy as np
 from utils import features_training as ftrain
 
 
 import facenet_pytorch as facenet
 from torch.utils.data import DataLoader
-import matplotlib.pyplot as plt
 from torchvision import datasets
 
-from sklearn.manifold import TSNE
-from sklearn.decomposition import PCA
-from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.neighbors import KNeighborsClassifier
+
 
 
 net = facenet.InceptionResnetV1(pretrained='vggface2').eval()
 mtcnn = facenet.MTCNN(image_size=260)
-path = "data\\train"
+path = "data/train"
 
 def collate_fn(x):
     return x[0]
@@ -47,7 +38,7 @@ def plot_features(X,y):
     pass
 
 
-#%%
+
 if __name__=='__main__':
 
     df = datasets.ImageFolder(path)
@@ -61,12 +52,17 @@ if __name__=='__main__':
     faces, classes, probs = unpack_loader(train_loader, mtcnn)
     faces_t, classes_t, probs_t = unpack_loader(test_loader, mtcnn)
 
+
+
     features = net(faces).detach()
     features_t = net(faces_t).detach()
 
-    search = ftrain.BestModel(ftrain.params)
+    classes_min = torch.bincount(classes).min().item()
+    cv = min(classes_min, 4)
+
+    search = ftrain.BestModel(cv=cv, params=ftrain.params)
     search.fit(features, classes)
 
-    joblib.dump(search.best_classifier, 'model.joblib')
-
+    # joblib.dump(search.best_classifier, 'model.joblib')
+    'gcloud beta ai-platform predict --model face --version v1 --json-instances filename.json'
 
