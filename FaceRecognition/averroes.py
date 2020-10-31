@@ -5,6 +5,7 @@ import datetime
 import argparse
 import joblib
 import numpy as np
+from utils import features_training as ftrain
 
 
 import facenet_pytorch as facenet
@@ -63,5 +64,7 @@ if __name__=='__main__':
     features = net(faces).detach()
     features_t = net(faces_t).detach()
 
+    search = ftrain.BestModel(ftrain.params)
+    search.fit(features, classes)
 
 

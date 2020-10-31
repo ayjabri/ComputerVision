@@ -10,7 +10,7 @@ from types import SimpleNamespace
 from sklearn.tree import DecisionTreeClassifier
 
 
-classifiers = {
+params = {
             'RandomForestClassifier':{'n_estimators':[100],
                                     'criterion':['gini'],
                                     'max_depth':np.arange(1,10),
@@ -40,22 +40,24 @@ classifiers = {
 }
 
 class BestModel(object):
-    def __init__(self, classifiers=None):
+    def __init__(self, params=None):
         self.__c = []
-        if classifiers is not None:
-            for clf in classifiers:
-                setattr(self, clf+'_Grid', GridSearchCV(eval(clf)( ), param_grid=classifiers[clf]))
+        if params is not None:
+            for clf in params:
+                setattr(self, clf+'_Grid', GridSearchCV(eval(clf)( ), param_grid=params[clf]))
                 self.__c.append(getattr(self, clf+'_Grid'))
-        self.classifiers = classifiers
+        self.params = params
         self.best_classifier = None
-        # self.grid = GridSearchCV()
 
     def fit(self,x,y):
-        results = {}
+        self.results = {}
+        r = 0
         for i,classifier in enumerate(self.__c):
             classifier.fit(x,y)
-            print(f'classifier {i} has a top score of {classifier.best_score}')
+            score = classifier.best_score_
+            print(f'classifier {i} has a top score of {score}')
+            self.results[i] = [score, classifier.best_params_]
+            if score > r:
+                self.best_classifier = classifier
+            r = score
 
-
-b = BestModel(classifiers)
-b.fit(x,y)
