@@ -10,6 +10,7 @@ Tested with OpenCV
 
 import cv2
 import queue
+import time
 import threading
 import argparse
 from FaceDetection.models import f_net, haar
@@ -31,25 +32,29 @@ class FaceDetectLive(object):
 
     def __VideoCapture__(self):
         self.cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
+        self.cap.open(0)
         self.cap.set(3, self.h_res)
         self.cap.set(4, self.v_res)
 
+
     def __timer__(self):
         return (self.idx % self.skip_n == 0)
-    
+
     def __thread__(self, frame):
         th = threading.Thread(target=self.append_faces, args=(frame,))
         th.start()
-    
+
     def __append_faces__(self, frame):
         faces = self.clf.find_faces(frame)
         self.q.append(faces)
-        
-    def play(self):    
+
+    def play(self):
         faces_old = None
         faces = None
         while True:
-            _ , frame = self.cap.read()
+            good , frame = self.cap.read()
+            if not good:
+                continue
             frame = cv2.flip(frame,1) #flip horizontaly because it looks better!
             if self.__timer__():
                 if self.th == True:
