@@ -27,15 +27,15 @@ class FaceDetectLive(object):
         self.__VideoCapture__()
         self.q = queue.deque(maxlen=100)
         self.th = th
-
+        self.idx = 0
 
     def __VideoCapture__(self):
-        self.cap = cv2.VideoCapture(0)
+        self.cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
         self.cap.set(3, self.h_res)
         self.cap.set(4, self.v_res)
 
-    def __timer__(self, i):
-        return (i % self.skip_n == 0)
+    def __timer__(self):
+        return (self.idx % self.skip_n == 0)
     
     def __thread__(self, frame):
         th = threading.Thread(target=self.append_faces, args=(frame,))
@@ -45,15 +45,13 @@ class FaceDetectLive(object):
         faces = self.clf.find_faces(frame)
         self.q.append(faces)
         
-    def play(self):
-        i = 0
+    def play(self):    
         faces_old = None
         faces = None
         while True:
-            good, frame = self.cap.read()
+            _ , frame = self.cap.read()
             frame = cv2.flip(frame,1) #flip horizontaly because it looks better!
-            # if good:
-            if self.__timer__(i):
+            if self.__timer__():
                 if self.th == True:
                     self.__thread__(frame)
                 else:
@@ -61,7 +59,7 @@ class FaceDetectLive(object):
                 faces = self.q.pop() if len(self.q) > 0 else faces_old
             faces_old = faces
             frame = self.clf.draw_rect(frame, faces)
-            i += 1
+            self.idx += 1
             cv2.imshow('face', frame)
             if cv2.waitKey(1) & 0xFF == ord('q'):break
         self.cap.release()
