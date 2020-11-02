@@ -36,13 +36,22 @@ class FaceNet(facenet.MTCNN):
     def find_faces(self,img):
         return self.detect(img)[0]
 
-    def draw_rect(self, frame, faces):
+    def draw_rect(self, frame, faces, text='Searching...'):
         if faces  is None: return frame
         img = frame.copy()
         for box in faces:
             x,y,h,w = box.astype(int)
             cv2.rectangle(img, (x, y), (h, w), (80,18,236), 2)
             cv2.rectangle(img, (x, y), (h, y-15), (80,18,236), cv2.FILLED)
-            cv2.putText(img, 'face', (x + 6, y - 2), cv2.FONT_HERSHEY_DUPLEX, 0.5, (255, 255, 255), 1)
+            cv2.putText(img, text, (x + 6, y - 2), cv2.FONT_HERSHEY_DUPLEX, 0.5, (255, 255, 255), 1)
         return img
 
+    def crop(self, img, box, scale=[75,30]):
+        tr,tl,lr,ll = box.astype(int)
+        tl -=scale[0]
+        tr +=scale[0]
+        lr +=scale[1]
+        ll -=scale[1]
+        return img[tl:tr,ll:lr]
+
+net = facenet.InceptionResnetV1(pretrained='vggface2').eval()

@@ -10,17 +10,29 @@ Tested with OpenCV
 
 import cv2
 import queue
-import time
+import joblib
 import threading
 import argparse
 from FaceDetection.models import f_net, haar
+import pandas as pd
 
 
+classes = pd.read_csv('FaceRecognition/classes.csv')
+classes = classes.values.reshape(len(classes)).tolist()
 
 class FaceDetectLive(object):
-    def __init__(self, classifier, recognize, skip_n=1, h_res=400, v_res=600, font=cv2.FONT_HERSHEY_DUPLEX, th = False):
+    '''
+    Create a face-detection object using webcam.
+    classifier: choices between "HAAR", "FaceNet" or "HOG"
+    recognize: path to an sklearn modle trained on features extracted from Facenet
+    '''
+    def __init__(self, classifier, recognize=None, skip_n=1,
+                 h_res=400, v_res=600, font=cv2.FONT_HERSHEY_DUPLEX, th = False):
         self.clf = classifier
         self.recognize = recognize
+        if recognize is not None:
+            self.model = joblib.load(recognize)
+            self.net = f_net.net
         self.skip_n = skip_n
         self.h_res = h_res
         self.v_res = v_res
@@ -50,6 +62,7 @@ class FaceDetectLive(object):
 
     def play(self):
         faces_old = None
+        old_name = 'Searching...'
         faces = None
         while True:
             good , frame = self.cap.read()
@@ -62,8 +75,17 @@ class FaceDetectLive(object):
                 else:
                     self.__append_faces__(frame)
                 faces = self.q.pop() if len(self.q) > 0 else faces_old
+                if faces is not None and self.recognize is not None and self.idx % 60 ==0 :
+                    try:
+                        ii = self.clf(frame)
+                        features = self.net(ii).detach()
+                        d = self.model.predict(features).item()
+                        name = classes[d]
+                        old_name = name
+                    except:
+                        pass
             faces_old = faces
-            frame = self.clf.draw_rect(frame, faces)
+            frame = self.clf.draw_rect(frame, faces, old_name)
             self.idx += 1
             cv2.imshow('face', frame)
             if cv2.waitKey(1) & 0xFF == ord('q'):break
@@ -78,15 +100,17 @@ if __name__=="__main__":
     parser.add_argument('--n', required=False, type= int, default=1, help='Detect faces on the Nth frame')
     parser.add_argument('--algo', required=False, help='Algorithm to use: choose between: "haar", "hog" and "facenet"')
     parser.add_argument('--threading', required=False, default=False, type=str, help='Use threading to detect faces')
+    parser.add_argument('--recognize', required=False, default =False, type=bool, help='recognize the face using features')
+
     arg = parser.parse_args()
     fname = (arg.file if arg.file else 'FaceDetection/models/haarcascade_frontalface_default.xml')
-
+    pathM = ('FaceRecognition/model.joblib' if arg.recognize else None)
     if arg.algo == 'facenet':
         clf = f_net.FaceNet(**f_net.params)
     else:
         clf = haar.HAAR(fname)
 
 
-    cam = FaceDetectLive(clf, recognize= False, skip_n=arg.n, th=arg.threading)
+    cam = FaceDetectLive(clf, recognize= pathM, skip_n=arg.n, th=arg.threading)
     cam.play()
 

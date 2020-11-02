@@ -57,7 +57,7 @@ class BestModel(object):
             classifier.fit(x,y)
             score = classifier.best_score_
             print(f'classifier {i} has a top score of {score}')
-            self.results[i] = [score, classifier.best_params_]
+            self.results[list(params.keys())[i]] = [score, classifier.best_params_]
             if score > r:
                 self.best_classifier = classifier.best_estimator_
             r = score
