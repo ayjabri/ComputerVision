@@ -12,7 +12,7 @@ cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
 q = queue.deque()
 
 # Create the haar cascade
-faceCascade = cv2.CascadeClassifier("haarcascade_frontalface_default.xml")
+faceCascade = cv2.CascadeClassifier("FaceDetection/models/haarcascade_frontalface_default.xml")
 
 def detect(frame):
     q.append(faceCascade.detectMultiScale(frame,
