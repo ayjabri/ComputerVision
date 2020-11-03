@@ -53,7 +53,7 @@ class FaceDetectLive(object):
         return (self.idx % self.skip_n == 0)
 
     def __thread__(self, frame):
-        th = threading.Thread(target=self.append_faces, args=(frame,))
+        th = threading.Thread(target=self.__append_faces__, args=(frame,))
         th.start()
 
     def __append_faces__(self, frame):
@@ -70,12 +70,12 @@ class FaceDetectLive(object):
                 continue
             frame = cv2.flip(frame,1) #flip horizontaly because it looks better!
             if self.__timer__():
-                if self.th == True:
+                if self.th:
                     self.__thread__(frame)
                 else:
                     self.__append_faces__(frame)
                 faces = self.q.pop() if len(self.q) > 0 else faces_old
-                if faces is not None and self.recognize is not None and self.idx % 60 ==0 :
+                if faces is not None and self.recognize and self.idx % 60 ==0 :
                     try:
                         ii = self.clf(frame)
                         features = self.net(ii).detach()
@@ -96,11 +96,16 @@ class FaceDetectLive(object):
 
 if __name__=="__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('--file', required=False, help='Name and path of the HAAR file')
-    parser.add_argument('--n', required=False, type= int, default=1, help='Detect faces on the Nth frame')
-    parser.add_argument('--algo', required=False, help='Algorithm to use: choose between: "haar", "hog" and "facenet"')
-    parser.add_argument('--threading', required=False, default=False, type=str, help='Use threading to detect faces')
-    parser.add_argument('--recognize', required=False, default =False, type=bool, help='recognize the face using features')
+    parser.add_argument('--file',
+                        help='Name and path of the HAAR file')
+    parser.add_argument('--n', type= int, default=1,
+                        help='Detect faces on the Nth frame')
+    parser.add_argument('--algo',
+                        help='Algorithm to use: choose between: "haar", "hog" and "facenet"')
+    parser.add_argument('--threading', default=False, action='store_true',
+                        help='Use threading to detect faces')
+    parser.add_argument('--recognize', action='store_true', default =False,
+                        help='recognize the face using features')
 
     arg = parser.parse_args()
     fname = (arg.file if arg.file else 'FaceDetection/models/haarcascade_frontalface_default.xml')
