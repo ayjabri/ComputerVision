@@ -27,12 +27,12 @@ class HAAR(cv2.CascadeClassifier):
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         return self.detectMultiScale(gray, **self.kwargs)
 
-    def draw_rect(self, frame, faces):
+    def draw_rect(self, frame, faces,  text='Unknown!'):
         if faces  is None: return frame
         for box in faces:
             x,y,h,w = box
             cv2.rectangle(frame, (x, y), (x+h, y+w), (80,18,236), 2)
             cv2.rectangle(frame, (x, y), (x+h, y-15), (80,18,236), cv2.FILLED)
-            cv2.putText(frame, 'face', (x + 6, y - 2), cv2.FONT_HERSHEY_DUPLEX, 0.5, (255, 255, 255), 1)
+            cv2.putText(frame, text, (x + 6, y - 2), cv2.FONT_HERSHEY_DUPLEX, 0.5, (255, 255, 255), 1)
         return frame
 
