@@ -17,7 +17,7 @@ from FaceDetection.models import f_net, haar
 import pandas as pd
 
 
-classes = pd.read_csv('FaceRecognition/classes.csv')
+classes = pd.read_csv('FaceRecognition/results/classes.csv')
 classes = classes.values.reshape(len(classes)).tolist()
 
 class FaceDetectLive(object):
@@ -118,4 +118,3 @@ if __name__=="__main__":
 
     cam = FaceDetectLive(clf, recognize= pathM, skip_n=arg.n, th=arg.threading)
     cam.play()
-
