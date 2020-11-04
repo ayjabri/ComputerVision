@@ -19,3 +19,7 @@ Resize only:
 >>> PIL is 1.6 times faster that OpenCV
 Resiz then grayscale:
 >>> PIL is 3.9 times faster that OpenCV
+
+A run of 1 million on Google Cloud machine:
+$ python whichIsFaster.py --n 1000000 --gray
+>>>PIL is 4.6 times faster that OpenCV
