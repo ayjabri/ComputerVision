@@ -1,14 +1,17 @@
 ## Which Library is Faster for DQN
 
-This small script testing the performance of Pillow-SIMD vs OpenCV when it comes to Reinforcement Learning algorithms
+This small script tests the performance of Pillow-SIMD vs OpenCV for Reinforcement Learning algorithms.
 
-It concentrates on two features I use a lot in Deep Learning: 
-1- One is Resize: as we often reduce captured images (i.e. states)
-2 - Convert images to grayscale to reduce overload
+It tests two main features I use a lot in Deep Learning:   
+* Resize images: we often reduce captured images size to speed up learning
+* Convert them to grayscale for the same reason
 
-you can run the script from command line by typing:
+Run the script from command line:
 `$python whichisFaster.py --n 10000`
 
-Where `n` is the number of itterations. You can add `--gray` to convert to gray after resizing (you might want to try convert then resize as well). 
+Where `--n` argument is the number of itterations. You can also add `--gray` to convert the image to gray scale as well as resizing it (it resizes first then converts to gray, you can change the order if you want!). 
 
-Note: you can either use the photo in this folder or replace it with another. Just make sure the name is `img.jpg`
+Note: you can replace the photo used `img.jpg` as long as it has the same name
+
+Results Summary:
+The results have varied based on your machine so I won't 
