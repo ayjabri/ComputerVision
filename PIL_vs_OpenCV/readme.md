@@ -13,5 +13,9 @@ Where `--n` argument is the number of itterations. You can also add `--gray` to 
 
 Note: you can replace the photo used `img.jpg` as long as it has the same name
 
-Results Summary:
-The results have varied based on your machine so I won't 
+### Results Summary:
+The results varied from one machine to another, but this is what i got:
+Resize only:
+>>> PIL is 1.6 times faster that OpenCV
+Resiz then grayscale:
+>>> PIL is 3.9 times faster that OpenCV
