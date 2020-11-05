@@ -29,12 +29,11 @@ img = cv2.imread("img.jpg")
 
 PIL_resize = '''
 # To make the two copmarable we need to resize the photo first them convert it to numpy array
-resized = np.array(img.resize((260,260), resample=Image.NEAREST, reducing_gap=3))
+resized = np.array(img.resize((260,260), resample=Image.NEAREST))
 '''
 
 PIL_resize_gray = '''
-
-resized = img.resize((260,260), resample=Image.NEAREST, reducing_gap=3)
+resized = img.resize((260,260), resample=Image.NEAREST)
 gray = np.array(resized.convert("L"))
 '''
 
@@ -52,9 +51,8 @@ if __name__=="__main__":
     if arg.gray:
         cv2_resize = cv2_resize_gray
         PIL_resize = PIL_resize_gray
-    
-    cv = timeit(stmt=cv2_resize, setup=cv2_setup, number=arg.n)
-    PIL = timeit(stmt=PIL_resize, setup=PIL_setup, number=arg.n)
 
+    cv = timeit(stmt=cv2_resize, setup=cv2_setup, number=arg.n)
+    PIL = timeit(stmt= PIL_resize, setup=PIL_setup, number=arg.n)
     state = ('faster' if cv/PIL > 1 else 'slower')
     print(f'PIL is {cv/PIL:.1f} times {state} that OpenCV')
