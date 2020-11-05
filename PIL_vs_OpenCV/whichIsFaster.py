@@ -33,7 +33,11 @@ resized = np.array(img.resize((260,260), resample=Image.NEAREST))
 '''
 
 PIL_resize_gray = '''
+<<<<<<< HEAD
 resized = img.resize((260,260), resample=Image.NEAREST)
+=======
+resized = img.resize((260,260), resample=Image.NEAREST, reducing_gap=3)
+>>>>>>> 56fe90db8e5460696bc1317023f588a4dcd49373
 gray = np.array(resized.convert("L"))
 '''
 
