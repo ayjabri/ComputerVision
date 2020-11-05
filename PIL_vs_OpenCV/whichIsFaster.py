@@ -6,11 +6,6 @@ grayscaling: OpenCV is faster when it comes ot grayscaling a photo
 
 Conclusion: if you want to grayscale then resize a photo for DeepLearning then you are better off using OpenCV
 
-Update: I ran the code on google cloud machine and it showed PIL-SIMD 4.9 times faster with grayscaling!
-
-$ python whichIsFaster.py --n 10000 --gray
-PIL is 4.9 times faster that OpenCV
-
 '''
 
 from timeit import timeit
@@ -38,7 +33,6 @@ resized = np.array(img.resize((260,260), resample=Image.NEAREST, reducing_gap=3)
 '''
 
 PIL_resize_gray = '''
-
 resized = img.resize((260,260), resample=Image.NEAREST, reducing_gap=3)
 gray = np.array(resized.convert("L"))
 '''
