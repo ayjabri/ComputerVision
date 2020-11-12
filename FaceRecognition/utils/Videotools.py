@@ -9,6 +9,7 @@ Created on Thu Nov  5 08:42:23 2020
 import cv2
 import numpy as np
 import os
+from PIL import Image
 
 source = 'C:\\Users\\ayjab\\Videos\\Captures\\'
 file = 'Zoom Meeting 2020-11-03 08-56-14.mp4'
@@ -30,7 +31,7 @@ class ImageExtractor():
         self.destination = destination
         self.n = n
         self.name = name
-    
+
     def extract(self, save=False):
         if not self.cap.isOpened(): self.cap.open(source)
         total_n_frames = int(self.cap.get(7))
@@ -41,9 +42,14 @@ class ImageExtractor():
             ret, frame = self.cap.read()
             if ret:
                 frames.append(frame)
-                if save: 
+                if save:
                     if not os.path.exists(self.destination):
                         os.mkdir(self.destination)
                     cv2.imwrite(f'{self.destination}{self.name}_{i}.jpg', frame)
         self.cap.release()
         return np.array(frames)
+
+
+def show(img):
+    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    return Image.fromarray(img)

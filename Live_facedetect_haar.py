@@ -9,38 +9,38 @@ import threading
 
 
 cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
-q = queue.deque()
+cap.open(0)
+
 
 # Create the haar cascade
 faceCascade = cv2.CascadeClassifier("FaceDetection/models/haarcascade_frontalface_default.xml")
+tracker = cv2.TrackerCSRT_create()
 
-def detect(frame):
-    q.append(faceCascade.detectMultiScale(frame,
-                                          scaleFactor=1.4,
-                                    	  minNeighbors=5,
-                                          minSize=(30, 30)))
+
+idx = 0
+
 while True:
     ret, frame = cap.read()
-    frame = cv2.flip(frame,1)    
-    if ret:
-        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-        th1 = threading.Thread(target= detect, args= (gray,))
-        th1.start()
-        try:
-            faces = q.pop()
-            for (x, y, w, h) in faces:
-                cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
-        except:
-            pass
-    
+    frame = cv2.flip(frame,1)
+    if not ret:
+        break
+    idx += 1
+    if idx % 30 == 0:
+        box = faceCascade.detectMultiScale(frame,minNeighbors=5,minSize=(30, 30))
+        tracker.init(frame, tuple(box[0]))
+    try:
+        success, tbox = tracker.update(frame)
+        tbox = [int(x) for x in tbox]
+
+        (x, y, w, h) = tbox
+        cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
+    except:
+        pass
+
     cv2.imshow('frame', frame)
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
-    
+
 # When everything done, release the capture
 cap.release()
 cv2.destroyAllWindows()
-
-
-
-

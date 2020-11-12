@@ -13,12 +13,11 @@ import queue
 import joblib
 import threading
 import argparse
-from FaceDetection.models import f_net, haar
+from FaceDetection.models import f_net, haar, hog
 import pandas as pd
 
-
 classes = pd.read_csv('FaceRecognition/results/classes.csv')
-classes = classes.values.reshape(len(classes)).tolist()
+classes = classes.values.reshape(len(classes))
 
 class FaceDetectLive(object):
     '''
@@ -61,9 +60,7 @@ class FaceDetectLive(object):
         self.q.append(faces)
 
     def play(self):
-        faces_old = None
-        old_name = 'Searching...'
-        faces = None
+        faces_old,old_names,faces = None, None, None
         while True:
             good , frame = self.cap.read()
             if not good:
@@ -75,17 +72,17 @@ class FaceDetectLive(object):
                 else:
                     self.__append_faces__(frame)
                 faces = self.q.pop() if len(self.q) > 0 else faces_old
-                if faces is not None and self.recognize and self.idx % 60 ==0 :
+                if faces is not None and self.recognize and self.idx % 30 ==0 :
                     try:
                         ii = self.clf(frame)
                         features = self.net(ii).detach()
-                        d = self.model.predict(features).item()
-                        name = classes[d]
-                        old_name = name
+                        d = self.model.predict(features).tolist()
+                        names = classes[d]
+                        old_names = names
                     except:
                         pass
-            faces_old = faces
-            frame = self.clf.draw_rect(frame, faces, old_name)
+                faces_old = faces
+            frame = self.clf.draw_rect(frame, faces_old, old_names)
             self.idx += 1
             cv2.imshow('face', frame)
             if cv2.waitKey(1) & 0xFF == ord('q'):break
@@ -108,10 +105,14 @@ if __name__=="__main__":
                         help='recognize the face using features')
 
     arg = parser.parse_args()
+    pathM = None
     fname = (arg.file if arg.file else 'FaceDetection/models/haarcascade_frontalface_default.xml')
-    pathM = ('FaceRecognition/model.joblib' if arg.recognize else None)
-    if arg.algo == 'facenet':
+    if arg.algo == 'facenet' or arg.recognize:
         clf = f_net.FaceNet(**f_net.params)
+        if arg.recognize:
+            pathM = 'FaceRecognition/model.joblib'
+    elif arg.algo =='hog':
+        clf = hog.HOG()
     else:
         clf = haar.HAAR(fname)
 

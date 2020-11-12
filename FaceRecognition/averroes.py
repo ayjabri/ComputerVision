@@ -11,6 +11,7 @@ Tested with OpenCV
 import torch
 import joblib
 import numpy as np
+import pandas as pd
 from utils import features_training as ftrain
 
 
@@ -34,7 +35,7 @@ def unpack_loader(loader, mtcnn, p=False):
     probs = []
     for x, y in loader:
         face, prob = mtcnn(x, return_prob=True)
-        if p: print(f'Found {loader.dataset.dataset.classes[y]} face with a probability of {prob:3f}%')
+        if p: print(f'Found {loader.dataset.classes[y]} face with a probability of {prob:3f}%')
         if prob > 0.7:
             faces.append(face)
             classes.append(y)
@@ -59,7 +60,7 @@ if __name__=='__main__':
     train_loader = DataLoader(train_df, collate_fn=collate_fn)
     test_loader = DataLoader(test_df, collate_fn=collate_fn)
 
-    faces, classes, probs = unpack_loader(train_loader, mtcnn)
+    faces, classes, probs = unpack_loader(train_loader, mtcnn, True)
     faces_t, classes_t, probs_t = unpack_loader(test_loader, mtcnn)
 
 
@@ -73,7 +74,7 @@ if __name__=='__main__':
     search = ftrain.BestModel(cv=cv, params=ftrain.params)
     search.fit(features, classes)
 
-    pd.DataFrame(df.classes).to_csv('classes.csv',header=['name'], index=False)
-    joblib.dump(search.best_classifier, 'model.joblib')
+    pd.DataFrame(df.classes).to_csv('classes1.csv',header=['name'], index=False)
+    joblib.dump(search.best_classifier, 'model1.joblib')
     'gcloud beta ai-platform predict --model face --version v1 --json-instances filename.json'
 
