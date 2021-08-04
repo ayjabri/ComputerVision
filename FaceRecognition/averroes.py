@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 """
 Created on Fri Oct 30 14:46:44 2020
-
 @author: Ayman Al Jabri
+
+Run this script to train your model 
 This script will detect faces via your webcam using multithread
 There should be no delay as a result of getting the faces from the model.
 Tested with OpenCV
@@ -10,7 +11,7 @@ Tested with OpenCV
 
 import torch
 import joblib
-import numpy as np
+# import numpy as np
 import pandas as pd
 from utils import features_training as ftrain
 
@@ -35,7 +36,7 @@ def unpack_loader(loader, mtcnn, p=False):
     probs = []
     for x, y in loader:
         face, prob = mtcnn(x, return_prob=True)
-        if p: print(f'Found {loader.dataset.classes[y]} face with a probability of {prob:3f}%')
+        if p: print(f'Detected {loader.dataset.dataset.classes[y]:20} face with a probability of {prob:.3f}%')
         if prob > 0.7:
             faces.append(face)
             classes.append(y)
@@ -74,7 +75,7 @@ if __name__=='__main__':
     search = ftrain.BestModel(cv=cv, params=ftrain.params)
     search.fit(features, classes)
 
-    pd.DataFrame(df.classes).to_csv('classes1.csv',header=['name'], index=False)
-    joblib.dump(search.best_classifier, 'model1.joblib')
+    pd.DataFrame(df.classes).to_csv('results/classes.csv',header=['name'], index=False)
+    joblib.dump(search.best_classifier, 'results/model.joblib')
     'gcloud beta ai-platform predict --model face --version v1 --json-instances filename.json'
 

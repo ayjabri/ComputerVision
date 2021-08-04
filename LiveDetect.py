@@ -110,7 +110,7 @@ if __name__=="__main__":
     if arg.algo == 'facenet' or arg.recognize:
         clf = f_net.FaceNet(**f_net.params)
         if arg.recognize:
-            pathM = 'FaceRecognition/model.joblib'
+            pathM = 'FaceRecognition/results/model.joblib'
     elif arg.algo =='hog':
         clf = hog.HOG()
     else:
