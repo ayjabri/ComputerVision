@@ -3,7 +3,7 @@
 Created on Fri Oct 30 14:46:44 2020
 
 @author: Ayman Al Jabri
-This script will detect faces via your webcam using multithread
+This script multithreads the detection of faces on webcam 
 There should be no delay as a result of getting the faces from the model.
 Tested with OpenCV
 """
