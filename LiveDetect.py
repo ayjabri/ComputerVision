@@ -3,9 +3,13 @@
 Created on Fri Oct 30 14:46:44 2020
 
 @author: Ayman Al Jabri
-This script multithreads the detection of faces on webcam 
-There should be no delay as a result of getting the faces from the model.
-Tested with OpenCV
+This script multithreads face detection on webcam . I Tried it on 16' MacPro and it works smoothly
+If you wanna run it in faceRecognition mode, make sure to train the model first and save it in
+results directory along with classes. To do that run averroes.py first in /FaceRecognition folder.
+
+Tested with:
+ opencv-contrib-python==4.5.3
+
 """
 
 import cv2
